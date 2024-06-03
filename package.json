@@ -1,7 +1,10 @@
 {
     "type": "module",
     "dependencies": {
+        "audio-speaker": "^1.5.1",
         "serverboy": "^0.0.7",
-        "uWebSockets.js": "github:uNetworking/uWebSockets.js#v20.43.0"
+        "speaker": "^0.5.5",
+        "uWebSockets.js": "github:uNetworking/uWebSockets.js#v20.43.0",
+        "web-audio-api": "^0.2.2"
     }
 }
