@@ -23,7 +23,7 @@ const speaker = new Speaker({
   bitDepth: 32,
 
   sampleRate: 44150.56842105263,
-    float: true,
+  float: true,
 });
 /*const floatTo16BitPCM = (value) => {
   const s = Math.max(-1, Math.min(1, value)); // Clamp value to -1 to 1
@@ -38,16 +38,16 @@ const audioStream = new Writable({
 
     // Convert the floating-point samples to 16-bit PCM
     for (let i = 0; i < chunk.length; i++) {
-      pcmBuffer.writeFloatBE((chunk[i]), i * 2);
+      pcmBuffer.writeFloatBE(chunk[i], i * 2);
     }
 
     // Write the PCM buffer to the speaker
     speaker.write(pcmBuffer);
     callback();
   },
-  decodeStrings: false
+  decodeStrings: false,
 });
-
+let currGame = "zelda";
 
 const app = uWS
   .App()
@@ -69,10 +69,10 @@ const app = uWS
         for (let i = 0; i < 705; i += 2) {
           audioLoop.push(currentAudio[i]);
         }
-        console.log("Audio loop", audioLoop.length);
+        //console.log("Audio loop", audioLoop.length);
         // array to arraybuffer
-        audioStream.write(Buffer.from(new Float32Array(audioLoop).buffer));
-        if (frame % 4 === 0) {
+        //audioStream.write(Buffer.from(new Float32Array(audioLoop).buffer));
+        if (frame % 1 === 0) {
           try {
             //console.log("Sending frame");
             ws.send(
@@ -90,7 +90,12 @@ const app = uWS
       let parsedMessage = JSON.parse(new TextDecoder().decode(message));
 
       if (parsedMessage.event === "loadRom") {
+        fs.writeFileSync(
+          `${parsedMessage.rom}.save`,
+          JSON.stringify(Object.values(emulator.getMemory()))
+        );
         console.log("Loading rom", parsedMessage.rom);
+        currGame = parsedMessage.rom;
         if (parsedMessage.rom === "zelda") {
           emulator.loadRom(zelda);
         } else if (parsedMessage.rom === "tetris") {
@@ -101,6 +106,17 @@ const app = uWS
           emulator.loadRom(twenty48);
         } else if (parsedMessage.rom === "pocketlove") {
           emulator.loadRom(pocketlove);
+        }
+        console.log(
+          "Loaded rom",
+          parsedMessage.rom,
+          `./${parsedMessage.rom}.save`
+        );
+        if (fs.existsSync(`./${parsedMessage.rom}.save`)) {
+          console.log("Loading save file");
+          emulator.setMemory(0,
+            JSON.parse(fs.readFileSync(`${parsedMessage.rom}.save`))
+          );
         }
       }
       if (

@@ -4,12 +4,17 @@ package proyecto;
 import java.awt.*;
 
 import javax.swing.*;
+import javax.swing.event.ChangeListener;
+
 import com.formdev.flatlaf.themes.FlatMacLightLaf;
 
 public class App {
     private static Gameboy gameboy = new Gameboy();
 
     private static Pong pong = new Pong();
+
+    private static Snake snake = new Snake();
+    private static String currGame = "gameboy";
 
     public static void main(String[] args) {
         // create jframe
@@ -43,11 +48,13 @@ public class App {
             JComboBox<String> modes = new JComboBox<String>();
             modes.addItem("Gameboy");
             modes.addItem("Pong");
+            modes.addItem("Snake");
             panel.add(modes, BorderLayout.CENTER);
             JComboBox<String> comboBox = new JComboBox<String>();
-
+            
             modes.addActionListener(modesEvent -> {
                 if (modes.getSelectedItem().toString().equals("Gameboy")) {
+                    comboBox.setVisible(true);
                     comboBox.removeAllItems();
                     comboBox.addItem("tetris");
                     comboBox.addItem("mario");
@@ -56,9 +63,10 @@ public class App {
                     comboBox.addItem("zelda");
                     comboBox.addItem("2048");
                 } else {
+                    comboBox.setVisible(false);
                     comboBox.removeAllItems();
-                    comboBox.addItem("other");
-                    comboBox.addItem("other2");
+                    comboBox.addItem("pong");
+                    comboBox.addItem("snake");
                     comboBox.addItem("other3");
                 }
             });
@@ -68,6 +76,8 @@ public class App {
             submit.addActionListener(e2 -> {
                 Notifier.emit("start", modes.getSelectedItem().toString().toLowerCase());
                 Notifier.emit("loadRom", comboBox.getSelectedItem().toString());
+                Modal.getModal(frame).close();
+                currGame = modes.getSelectedItem().toString();
             });
             panel.add(submit, BorderLayout.CENTER);
 
@@ -82,15 +92,27 @@ public class App {
         toolbar.add(button, BorderLayout.EAST);
         JButton button2 = new JButton("􀊊  ");
         toolbar.add(button2, BorderLayout.EAST);
+        button2.addActionListener(e2-> {
+            Notifier.emit("start",currGame.toLowerCase());
+        });
         frame.add(toolbar, BorderLayout.PAGE_START);
         final JPanel center = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
         center.add(gameboy.getPanel());
         center.add(pong.getPanel());
+        center.add(snake.getPanel());
+
 
         frame.add(center, BorderLayout.CENTER);
 
         pong.getPanel().setVisible(false);
+        snake.getPanel().setVisible(false);
         // add cards
+        var colorchooser = new JColorChooser();
+        colorchooser.setPreviewPanel(new JPanel());
+        JColorChooser.createDialog(frame, "Choose Color", true, colorchooser, null, null).setVisible(true);
+        //var tcc =  JColorChooser.showDialog(center, currGame, Color.WHITE);
+      
+        
         frame.setVisible(true);
     }
 
@@ -105,7 +127,10 @@ public class App {
             setResizable(false);
             setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
         }
-
+        public Modal close() {
+            setVisible(false);
+            return inst;
+        }
         public Modal bake() {
             setVisible(true);
             return inst;
