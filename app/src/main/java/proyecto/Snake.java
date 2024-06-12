@@ -12,16 +12,18 @@ public class Snake implements Notifiable {
 
     private Thread thread = null;
     private JPanel panel;
-    // private long[][] board = new long[20][20];
+    // private long[][] board = new long[240][240];
     private ArrayList<Vector<Integer>> snake = new ArrayList<>();
+    private ArrayList<Integer> snakeBulges = new ArrayList<>();
     private ArrayList<Vector<Integer>> apples = new ArrayList<>();
 
     private int dirX = 1;
     private int dirY = 0;
-    private int snakeLength = 1;
+    private int snakeLength = 10;
     private int snakeX = 5;
     private int snakeY = 5;
     private boolean alive = true;
+    private Color primaryColor = Color.BLUE;
 
     public JPanel getPanel() {
         return panel;
@@ -38,27 +40,38 @@ public class Snake implements Notifiable {
             @Override
             protected void paintComponent(Graphics g) {
                 super.paintComponent(g);
-                BufferedImage img = new BufferedImage(20, 20, BufferedImage.TYPE_INT_RGB);
-                Color[] pixels = new Color[20 * 20];
-                for (int i = 0; i < 20 * 20; i++) {
-                    int x = i % 20;
-                    int y = i / 20;
-                    // fill board with color
-                    pixels[i] = new Color(255, 100, 255);
-                    // pixels[i] = board[x][y] > 0 ? new Color(0, 0, 0)
-                    // : board[x][y] == 0 ? new Color(255, 100, 255) : new Color(0, 255, 0);
+
+                Graphics2D g2d = (Graphics2D) g;
+                g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                GradientPaint gp = new GradientPaint(0, 0, primaryColor, 0, 10, primaryColor.brighter());
+
+                for (int i = snake.size() - 1; i >= 0; i--) {
+                    Vector<Integer> v = snake.get(i);
+                    if (i == 0) {
+                        g.setColor(primaryColor.darker());
+                    } else {
+                        g2d.setPaint(gp);
+                    }
+                    
+
+                    g.fillArc(v.get(0), v.get(1), 10, 10, 0, 360);
+                    if (i == 0) {
+                        g.setColor(Color.WHITE);
+                        g.drawArc(v.get(0) + 5 + 3 * dirX, v.get(1) + 5 + 3 * dirY, 2, 2, 0, 360);
+                    }
                 }
-                for (Vector<Integer> v : snake) {
-                    pixels[v.get(0) + v.get(1) * 20] = new Color(0, 255, 0);
-                }
-                for (Vector<Integer> v : apples) {
-                    pixels[v.get(0) + v.get(1) * 20] = new Color(255, 0, 0);
-                }
-                for (int i = 0; i < 20 * 20; i++) {
-                    img.setRGB(i % 20, i / 20, pixels[i].getRGB());
+                for (Integer v : snakeBulges) {
+                    g.setColor(primaryColor);
+                    g.fillArc(snake.get(v).get(0) - 3, snake.get(v).get(1) - 3, 16, 16, 0, 360);
                 }
 
-                g.drawImage(img, 0, 0, 120 * 2, 120 * 2, null);
+                for (Vector<Integer> v : apples) {
+                    g.setColor(Color.RED);
+                    Image image = new ImageIcon("src/main/java/proyecto/image.png").getImage();
+                    g.drawImage(image, v.get(0) - 1, v.get(1) - 1, 12, 12, null);
+                }
+
+                // g.drawImage(img, 0, 0, 240 * 2, 240 * 2, null);
                 if (!alive) {
                     g.setColor(Color.RED);
                     g.drawString("Game Over", 70, 70);
@@ -69,7 +82,8 @@ public class Snake implements Notifiable {
         KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(new KeyEventDispatcher() {
             @Override
             public boolean dispatchKeyEvent(KeyEvent e) {
-
+                int oldDirX = dirX;
+                int oldDirY = dirY;
                 if (e.getKeyCode() == KeyEvent.VK_UP) {
                     dirX = 0;
                     dirY = -1;
@@ -83,7 +97,12 @@ public class Snake implements Notifiable {
                     dirX = 1;
                     dirY = 0;
                 }
+                if (dirX == -oldDirX && dirY == -oldDirY) {
+                    dirX = oldDirX;
+                    dirY = oldDirY;
+                }
                 return false;
+
             }
         });
     }
@@ -99,6 +118,8 @@ public class Snake implements Notifiable {
                 }
                 panel.setVisible(false);
             }
+        } else if (type.equals("peaceful")) {
+            peaceful = value.equals("Peaceful");
         }
     }
 
@@ -106,48 +127,71 @@ public class Snake implements Notifiable {
         if (thread != null && thread.isAlive()) {
             thread.interrupt();
         }
-        snakeLength = 1;
-        snakeX = 5;
-        snakeY = 5;
+        snakeLength = 10;
+        snakeX = 40;
+        snakeY = 40;
         alive = true;
         snake.clear();
         apples.clear();
-
+        dirX = 1;
+        dirY = 0;
+        primaryColor = JColorChooser.showDialog(panel, "Choose snake color", Color.BLUE);
+        if (primaryColor == null) {
+            primaryColor = Color.BLUE;
+        }
         thread = new Thread(this::run);
         thread.start();
         panel.setVisible(true);
 
     }
-
+    private boolean peaceful = true;
     public void run() {
-
+        int frame = 0;
         while (true) {
-            if (!alive) {
-                continue;
-            }
             try {
-                Thread.sleep(150);
+                Thread.sleep(10);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
-
+            if (!alive) {
+                continue;
+            }
             snakeX += dirX;
             snakeY += dirY;
-            Vector<Integer> currPos = new Vector<Integer>()
-            {
+            Vector<Integer> currPos = new Vector<Integer>() {
                 {
                     add(snakeX);
                     add(snakeY);
                 }
             };
+            
+            if (snakeX < 0 || snakeX >= 240 || snakeY < 0 || snakeY >= 240) {
+                if (!peaceful) {
+                    break;
+                } else {
+                    snakeX = (snakeX + 240) % 240;
+                    snakeY = (snakeY + 240) % 240;
+                }
 
-            if (snakeX < 0 || snakeX >= 20 || snakeY < 0 || snakeY >= 20) {
-                break;
             }
-            if (apples.contains(currPos)) {
-                snakeLength++;
-                apples.remove(currPos);
+            for (Vector<Integer> apple : apples) {
+                int x = apple.get(0);
+                int y = apple.get(1);
+                if (x + 10 > snakeX && x < snakeX + 10 && y + 10 > snakeY && y < snakeY + 10) {
+                    snakeLength += 5;
+                    apples.remove(apple);
+                    snakeBulges.add(0, 0);
+                    break;
+                }
             }
+                for (int i = snakeBulges.size() - 1; i >= 0; i--) {
+                    if (snakeBulges.get(i) >= snake.size() - 2) {
+                        snakeBulges.remove(i);
+                    } else {
+                        snakeBulges.set(i, snakeBulges.get(i) + 2);
+                    }
+                }
+            
             if (snake.contains(currPos)) {
                 break;
             }
@@ -156,11 +200,10 @@ public class Snake implements Notifiable {
                 snake.remove(snake.size() - 1);
             }
 
-            if (Math.random() < 0.025) {
-                int x = (int) (Math.random() * 20);
-                int y = (int) (Math.random() * 20);
-                Vector<Integer> apple = new Vector<Integer>()
-                {
+            if (Math.random() < 0.0025) {
+                int x = (int) (Math.random() * 240);
+                int y = (int) (Math.random() * 240);
+                Vector<Integer> apple = new Vector<Integer>() {
                     {
                         add(x);
                         add(y);

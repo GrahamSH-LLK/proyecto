@@ -6,9 +6,8 @@ import java.awt.geom.Ellipse2D;
 import java.awt.geom.Rectangle2D;
 
 import javax.swing.*;
-
+// Notifiable is an interface that is used to notify individual games when a new event is received
 public class Pong implements Notifiable {
-    private static String currentRom = null;
     private static int currX = 0;
     private static double ballX = 0;
     private static double ballY = 0;
@@ -18,10 +17,6 @@ public class Pong implements Notifiable {
     private static boolean alive = true;
     private JPanel panel;
     private static int score = 0;
-
-    public void setRom(String rom) {
-        currentRom = rom;
-    }
 
     public JPanel getPanel() {
         return panel;
@@ -56,7 +51,7 @@ public class Pong implements Notifiable {
                 g.setColor(Color.WHITE);
                 g.drawString("Score: " + score, 5, 20);
 
-                g.drawRect((int) ballX, 0, 10, 10);
+                g.drawRect((int) ballX - 20, 0, 40, 10);
             }
         };
         panel.addMouseMotionListener(new MouseMotionListener() {
@@ -77,7 +72,7 @@ public class Pong implements Notifiable {
     public void start() {
         currX = 0;
         ballX = 0;
-        ballY = 0;
+        ballY = 12;
         ballDX = 2;
         ballDY = 2;
         alive = true;
@@ -87,14 +82,14 @@ public class Pong implements Notifiable {
             thread = new Thread(this::updateBall);
             thread.start();
 
-        } 
+        }
 
         panel.setVisible(true);
 
     }
 
     private void updateBall() {
-        
+
         while (true) {
             try {
                 Thread.sleep(10);
@@ -109,12 +104,12 @@ public class Pong implements Notifiable {
             if (ballX < 0 || ballX + 10 > 160 * 2) {
                 ballDX = -ballDX;
             }
-            if (ballY < 0 || ballY > 144 * 2) {
+            if (ballY < 10 || ballY > 144 * 2) {
                 ballDY = -ballDY;
             }
             if (ballY + 10 > 144 * 2 - 10 && ballX + 10 > currX && ballX - 10 < currX + 40) {
                 ballDY = -ballDY * 1.02;
-                ballDX = ballDX * 1.02 + ( currX-ballX) / 30.0;
+                ballDX = ballDX * 1.02 + (currX - ballX) / 30.0;
                 score++;
             }
             if (ballY > 144 * 2) {

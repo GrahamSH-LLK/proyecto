@@ -62,12 +62,14 @@ public class App {
 
                     comboBox.addItem("zelda");
                     comboBox.addItem("2048");
+                }  else if (modes.getSelectedItem().toString().equals("Snake")) {
+                    comboBox.setVisible(true);
+                    comboBox.removeAllItems();
+                    comboBox.addItem("Peaceful");
+                    comboBox.addItem("Normal");
                 } else {
                     comboBox.setVisible(false);
                     comboBox.removeAllItems();
-                    comboBox.addItem("pong");
-                    comboBox.addItem("snake");
-                    comboBox.addItem("other3");
                 }
             });
 
@@ -75,7 +77,12 @@ public class App {
             JButton submit = new JButton("Submit");
             submit.addActionListener(e2 -> {
                 Notifier.emit("start", modes.getSelectedItem().toString().toLowerCase());
-                Notifier.emit("loadRom", comboBox.getSelectedItem().toString());
+                if (modes.getSelectedItem().toString().equals("Snake")) {
+                    Notifier.emit("peaceful", comboBox.getSelectedItem().toString());
+                } else if (modes.getSelectedItem().toString().equals("Gameboy")) {
+                    Notifier.emit("loadRom", comboBox.getSelectedItem().toString());
+                }
+
                 Modal.getModal(frame).close();
                 currGame = modes.getSelectedItem().toString();
             });
@@ -107,10 +114,10 @@ public class App {
         pong.getPanel().setVisible(false);
         snake.getPanel().setVisible(false);
         // add cards
-        var colorchooser = new JColorChooser();
+        /*var colorchooser = new JColorChooser();
         colorchooser.setPreviewPanel(new JPanel());
         JColorChooser.createDialog(frame, "Choose Color", true, colorchooser, null, null).setVisible(true);
-        //var tcc =  JColorChooser.showDialog(center, currGame, Color.WHITE);
+        //var tcc =  JColorChooser.showDialog(center, currGame, Color.WHITE);*/
       
         
         frame.setVisible(true);

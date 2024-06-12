@@ -8,14 +8,12 @@ import java.awt.image.BufferedImage;
 import java.awt.event.*;
 import java.net.URI;
 
-import com.formdev.flatlaf.util.SystemInfo;
 import com.jsoniter.JsonIterator;
 
 public class Gameboy implements Notifiable {
     private WebSocketClient client = null;
     private int[] arr = new int[92160];
     private JPanel panel;
-    private static AudioPlayer player = new AudioPlayer();
 
     public void setRom(String rom) {
         client.send("{\"event\": \"loadRom\", \"rom\": \"" + rom + "\"}");
@@ -50,9 +48,8 @@ public class Gameboy implements Notifiable {
 
             }
         };
-        // listen to keyboard events
+        // listen to keyboard events and send them to the server
         panel.setFocusable(true);
-        boolean[] keys = new boolean[256];
         KeyboardFocusManager.getCurrentKeyboardFocusManager()
                 .addKeyEventDispatcher(new KeyEventDispatcher() {
 
@@ -72,14 +69,8 @@ public class Gameboy implements Notifiable {
         try {
             client = new WebSocketClient(new URI("ws://localhost:9002")) {
                 public void onMessage(String message) {
-                    // String[] parts = message.split("\n");
                     arr = JsonIterator.deserialize(message, int[].class);
-                    // double[] audio = JsonIterator.deserialize(parts[1], double[].class);
-                    // play audio
-
                     panel.repaint();
-                    // player.handleIncomingAudioData(audio);
-
                 }
 
                 public void onOpen(ServerHandshake handshake) {
@@ -87,7 +78,7 @@ public class Gameboy implements Notifiable {
                 }
 
                 public void onClose(int code, String reason, boolean remote) {
-                    // System.out.println("closed connection" + reason);
+                     System.out.println("closed connection" + reason);
                 }
 
                 public void onError(Exception ex) {
